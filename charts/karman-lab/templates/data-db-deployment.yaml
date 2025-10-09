@@ -1,0 +1,63 @@
+{{- $mode := .Values.source.mode | default "replay" -}}
+{{- $endpoint := ternary .Values.source.dataReplayEndpoint .Values.source.karmanEndpoint (eq $mode "replay") -}}
+{{- $port := regexReplaceAll ".*:(\\d+)" $endpoint "$1" -}}
+{{- $host := regexReplaceAll "tcp://([^:]+).*" $endpoint "$1" -}}
+{{- $topic := .Values.source.topic | default "" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-db
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: data-db } }
+  template:
+    metadata: { labels: { app: data-db } }
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.selectors.gpu }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.gpu }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- if eq $mode "replay" }}
+      initContainers:
+      - name: wait-for-publisher
+        image: busybox:1.28
+        command: 
+          - sh
+          - -c
+          - |
+            echo "Waiting for data-replay ZMQ socket to be ready..."
+            until nc -z data-replay.{{ .Values.namespace }}.svc.cluster.local 5557; do 
+              echo "data-replay port 5557 not ready, waiting..."
+              sleep 2
+            done
+            echo "data-replay ZMQ socket ready, waiting additional 10 seconds to ensure publisher is bound..."
+            sleep 10
+            echo "Ready to connect to data-replay"
+      {{- end }}
+      containers:
+      - name: data-db
+        image: {{ .Values.images.dataDb }}
+        args:
+          - --connection-string=$(CONNECTION_STRING)
+          - --zmq-endpoint=$(ZMQ_ENDPOINT)
+          - --zmq-topic=$(ZMQ_TOPIC)
+        env:
+        - name: CONNECTION_STRING
+          valueFrom: { secretKeyRef: { name: timescale-dsn, key: CONNECTION_STRING } }
+        - name: ZMQ_ENDPOINT
+          value: {{ $endpoint | quote }}
+        - name: ZMQ_TOPIC
+          value: {{ $topic | quote }}
+        resources:
+          requests: { cpu: "50m", memory: "128Mi" }
+          limits:   { cpu: "500m", memory: "512Mi" }
+

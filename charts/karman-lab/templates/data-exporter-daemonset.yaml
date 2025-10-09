@@ -1,0 +1,76 @@
+{{- $mode := .Values.source.mode | default "replay" -}}
+{{- $endpoint := ternary .Values.source.dataReplayEndpoint .Values.source.karmanEndpoint (eq $mode "replay") -}}
+{{- $topic := .Values.source.topic | default "" -}}
+{{- $endpoint_no_scheme := trimPrefix "tcp://" $endpoint -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: data-exporter
+  namespace: {{ .Values.namespace }}
+spec:
+  selector: { matchLabels: { app: data-exporter } }
+  template:
+    metadata: { labels: { app: data-exporter } }
+    spec:
+      {{- if eq .Values.prometheus.mode "external" }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- else }}
+      dnsPolicy: ClusterFirst
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.selectors.gpu }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.gpu }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- if eq $mode "replay" }}
+      initContainers:
+      - name: wait-for-publisher
+        image: busybox:1.28
+        command: 
+          - sh
+          - -c
+          - |
+            echo "Waiting for data-replay ZMQ socket to be ready..."
+            until nc -z data-replay.{{ .Values.namespace }}.svc.cluster.local 5557; do 
+              echo "data-replay port 5557 not ready, waiting..."
+              sleep 2
+            done
+            echo "data-replay ZMQ socket ready, waiting additional 10 seconds to ensure publisher is bound..."
+            sleep 10
+            echo "Ready to connect to data-replay"
+      {{- end }}
+      containers:
+      - name: data-exporter
+        image: {{ .Values.images.dataExporter }}
+        args:
+          - --source={{ trimPrefix "tcp://" $endpoint }}
+          - --prometheus-port=9105
+          # Empty subscription mirrors bibimbap's default behavior of emitting frames without a prefix.
+          - --zmq-subscription={{ $topic }}
+        ports:
+        - name: metrics
+          containerPort: 9105
+          {{- if eq .Values.prometheus.mode "external" }}
+          hostPort: 9105
+          {{- end }}
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet: { path: /metrics, port: 9105 }
+          initialDelaySeconds: 5
+        readinessProbe:
+          httpGet: { path: /metrics, port: 9105 }
+          initialDelaySeconds: 3

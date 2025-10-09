@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: karman-egress-allow
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector: {}
+  policyTypes: ["Egress"]
+  egress:
+  - to:
+    {{- if .Values.egress.allowedCidrs }}
+    {{- range $cidr := .Values.egress.allowedCidrs }}
+    - ipBlock: { cidr: "{{ $cidr }}" }
+    {{- end }}
+    {{- else }}
+    - ipBlock: { cidr: "0.0.0.0/0" }
+    {{- end }}
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 5557
+  - to:
+    - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: "{{ .Values.namespace }}" } }

@@ -1,0 +1,25 @@
+{{- if and .Values.prometheus.install .Values.timescale.install }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-datasource-timescale
+  namespace: {{ .Values.namespace }}
+  labels:
+    grafana_datasource: "1"
+type: Opaque
+stringData:
+  datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: TimescaleDB
+        type: postgres
+        access: proxy
+        url: timescale.{{ .Values.namespace }}.svc:{{ .Values.timescale.port }}
+        database: {{ .Values.timescale.database }}
+        user: {{ .Values.timescale.user }}
+        secureJsonData:
+          password: {{ .Values.timescale.password }}
+        jsonData:
+          sslmode: "disable"
+{{- end }}
+

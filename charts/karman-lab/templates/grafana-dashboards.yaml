@@ -1,0 +1,602 @@
+{{- if .Values.prometheus.install }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karman-grafana-dashboards
+  namespace: {{ .Values.namespace }}
+  labels:
+    grafana_dashboard: "1"
+data:
+  karman-per-cycle.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": "-- Grafana --",
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "refresh": "3s",
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": [
+        "karman",
+        "per-cycle"
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "metric1",
+            "type": "custom",
+            "label": "Per-Phase Metric 1",
+            "description": "Field to display in first panel (individual phases)",
+            "hide": 0,
+            "multi": false,
+            "includeAll": false,
+            "query": "Real Power (kW) : real_power,Reactive Power (kVAR) : reactive_power,Apparent Power (kVA) : apparent_power,Power Factor : power_factor,RMS Voltage (Vrms) : rms_voltage,RMS Current (Arms) : rms_current",
+            "options": [
+              {"text": "Real Power (kW)", "value": "real_power", "selected": true},
+              {"text": "Reactive Power (kVAR)", "value": "reactive_power", "selected": false},
+              {"text": "Apparent Power (kVA)", "value": "apparent_power", "selected": false},
+              {"text": "Power Factor", "value": "power_factor", "selected": false},
+              {"text": "RMS Voltage (Vrms)", "value": "rms_voltage", "selected": false},
+              {"text": "RMS Current (Arms)", "value": "rms_current", "selected": false}
+            ],
+            "current": {
+              "text": "Real Power (kW)",
+              "value": "real_power"
+            }
+          },
+          {
+            "name": "metric2",
+            "type": "custom",
+            "label": "Per-Phase Metric 2",
+            "description": "Field to display in second panel (individual phases)",
+            "hide": 0,
+            "multi": false,
+            "includeAll": false,
+            "query": "Real Power (kW) : real_power,Reactive Power (kVAR) : reactive_power,Apparent Power (kVA) : apparent_power,Power Factor : power_factor,RMS Voltage (Vrms) : rms_voltage,RMS Current (Arms) : rms_current",
+            "options": [
+              {"text": "Real Power (kW)", "value": "real_power", "selected": false},
+              {"text": "Reactive Power (kVAR)", "value": "reactive_power", "selected": false},
+              {"text": "Apparent Power (kVA)", "value": "apparent_power", "selected": false},
+              {"text": "Power Factor", "value": "power_factor", "selected": false},
+              {"text": "RMS Voltage (Vrms)", "value": "rms_voltage", "selected": true},
+              {"text": "RMS Current (Arms)", "value": "rms_current", "selected": false}
+            ],
+            "current": {
+              "text": "RMS Voltage (Vrms)",
+              "value": "rms_voltage"
+            }
+          }
+        ]
+      },
+      "time": {
+        "from": "now-2m",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": ["3s", "5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+      },
+      "timezone": "",
+      "title": "Karman - Per-Cycle Time Series (data-db)",
+      "uid": "karman-per-cycle",
+      "version": 1,
+      "panels": [
+        {
+          "datasource": "TimescaleDB",
+          "description": "Individual phase measurements (selector-driven)",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisWidth": 80
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null}
+                ]
+              }
+            },
+            "overrides": [
+              {"matcher": {"id": "byName", "options": "Phase A"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "Phase B"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "Phase C"}, "properties": [{"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}}]}
+            ]
+          },
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 0},
+          "id": 1,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom"},
+            "tooltip": {"mode": "multi", "sort": "none"}
+          },
+          "targets": [
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  $__time(time),\n  CASE\n    WHEN '${metric1}' IN ('real_power','reactive_power','apparent_power') THEN\n      (data -> 'threephase/karman1' -> 'phase_a' ->> '${metric1}')::double precision / 1000\n    ELSE\n      (data -> 'threephase/karman1' -> 'phase_a' ->> '${metric1}')::double precision\n  END AS \"Phase A\"\nFROM bibimbap\nWHERE device = 'bibimbap'\n  AND $__timeFilter(time)\nORDER BY time",
+              "refId": "A"
+            },
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  $__time(time),\n  CASE\n    WHEN '${metric1}' IN ('real_power','reactive_power','apparent_power') THEN\n      (data -> 'threephase/karman2' -> 'phase_a' ->> '${metric1}')::double precision / 1000\n    ELSE\n      (data -> 'threephase/karman2' -> 'phase_a' ->> '${metric1}')::double precision\n  END AS \"Phase B\"\nFROM bibimbap\nWHERE device = 'bibimbap'\n  AND $__timeFilter(time)\nORDER BY time",
+              "refId": "B"
+            },
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  $__time(time),\n  CASE\n    WHEN '${metric1}' IN ('real_power','reactive_power','apparent_power') THEN\n      (data -> 'threephase/karman3' -> 'phase_a' ->> '${metric1}')::double precision / 1000\n    ELSE\n      (data -> 'threephase/karman3' -> 'phase_a' ->> '${metric1}')::double precision\n  END AS \"Phase C\"\nFROM bibimbap\nWHERE device = 'bibimbap'\n  AND $__timeFilter(time)\nORDER BY time",
+              "refId": "C"
+            }
+          ],
+          "title": "Per-Phase: ${metric1}",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "TimescaleDB",
+          "description": "Individual phase measurements (selector-driven)",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisWidth": 80
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null}
+                ]
+              }
+            },
+            "overrides": [
+              {"matcher": {"id": "byName", "options": "Phase A"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "Phase B"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "Phase C"}, "properties": [{"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}}]}
+            ]
+          },
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 12},
+          "id": 2,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom"},
+            "tooltip": {"mode": "multi", "sort": "none"}
+          },
+          "targets": [
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  $__time(time),\n  CASE\n    WHEN '${metric2}' IN ('real_power','reactive_power','apparent_power') THEN\n      (data -> 'threephase/karman1' -> 'phase_a' ->> '${metric2}')::double precision / 1000\n    ELSE\n      (data -> 'threephase/karman1' -> 'phase_a' ->> '${metric2}')::double precision\n  END AS \"Phase A\"\nFROM bibimbap\nWHERE device = 'bibimbap'\n  AND $__timeFilter(time)\nORDER BY time",
+              "refId": "A"
+            },
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  $__time(time),\n  CASE\n    WHEN '${metric2}' IN ('real_power','reactive_power','apparent_power') THEN\n      (data -> 'threephase/karman2' -> 'phase_a' ->> '${metric2}')::double precision / 1000\n    ELSE\n      (data -> 'threephase/karman2' -> 'phase_a' ->> '${metric2}')::double precision\n  END AS \"Phase B\"\nFROM bibimbap\nWHERE device = 'bibimbap'\n  AND $__timeFilter(time)\nORDER BY time",
+              "refId": "B"
+            },
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  $__time(time),\n  CASE\n    WHEN '${metric2}' IN ('real_power','reactive_power','apparent_power') THEN\n      (data -> 'threephase/karman3' -> 'phase_a' ->> '${metric2}')::double precision / 1000\n    ELSE\n      (data -> 'threephase/karman3' -> 'phase_a' ->> '${metric2}')::double precision\n  END AS \"Phase C\"\nFROM bibimbap\nWHERE device = 'bibimbap'\n  AND $__timeFilter(time)\nORDER BY time",
+              "refId": "C"
+            }
+          ],
+          "title": "Per-Phase: ${metric2}",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "TimescaleDB",
+          "description": "Combined three-phase real power (sum of all three monitors)",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisWidth": 80
+              },
+              "unit": "kwatt",
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 24},
+          "id": 3,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom"},
+            "tooltip": {"mode": "multi", "sort": "none"}
+          },
+          "targets": [
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  $__time(time),\n  (data -> 'threephase/karman1' -> 'phase_a' ->> 'three_phase_real_power')::double precision / 1000 AS \"Three-Phase Real Power\"\nFROM bibimbap\nWHERE device = 'bibimbap'\n  AND $__timeFilter(time)\nORDER BY time",
+              "refId": "A"
+            }
+          ],
+          "title": "Three-Phase Combined: Real Power",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "TimescaleDB",
+          "description": "Combined three-phase reactive power (sum of all three monitors)",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisWidth": 80
+              },
+              "unit": "kvar",
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 36},
+          "id": 4,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom"},
+            "tooltip": {"mode": "multi", "sort": "none"}
+          },
+          "targets": [
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  $__time(time),\n  (data -> 'threephase/karman1' -> 'phase_a' ->> 'three_phase_reactive_power')::double precision / 1000 AS \"Three-Phase Reactive Power\"\nFROM bibimbap\nWHERE device = 'bibimbap'\n  AND $__timeFilter(time)\nORDER BY time",
+              "refId": "A"
+            }
+          ],
+          "title": "Three-Phase Combined: Reactive Power",
+          "type": "timeseries"
+        }
+      ]
+    }
+  karman-summary.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": "-- Grafana --",
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "refresh": "1s",
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": [
+        "karman",
+        "summary"
+      ],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-5m",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": ["3s", "5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+      },
+      "timezone": "",
+      "title": "Karman - Summary Statistics (data-exporter)",
+      "uid": "karman-summary",
+      "version": 1,
+      "panels": [
+        {
+          "datasource": "Prometheus",
+          "description": "Worst-case phase utilization vs {{ .Values.breakerRatingAmps }}A per-phase breaker rating. Each phase has its own breaker - if ANY phase hits 100%, that breaker trips.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "decimals": 1,
+              "color": {"mode": "thresholds"},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 60},
+                  {"color": "orange", "value": 75},
+                  {"color": "red", "value": 85}
+                ]
+              },
+              "max": 100,
+              "min": 0
+            }
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+          "id": 1,
+          "options": {
+            "graphMode": "area",
+            "orientation": "horizontal",
+            "textMode": "value",
+            "reduceOptions": {"values": false, "calcs": ["lastNotNull"]}
+          },
+          "targets": [{"expr": "max(rms_current_peak{stream=~\"threephase/.*\", phase=\"a\"}) / {{ .Values.breakerRatingAmps }} * 100", "refId": "A"}],
+          "title": "Worst Phase, Peak Current",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "description": "Peak-to-average current ratio across all phases. Shows load predictability. 1.0-1.2 = stable servers, 1.5+ = spikey LLM inference. High spikiness stresses breakers and complicates capacity planning.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "decimals": 1,
+              "color": {"mode": "thresholds"},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 1.2},
+                  {"color": "orange", "value": 1.5},
+                  {"color": "red", "value": 2.0}
+                ]
+              },
+              "min": 1.0
+            }
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+          "id": 2,
+          "options": {
+            "graphMode": "area",
+            "orientation": "horizontal",
+            "textMode": "value",
+            "reduceOptions": {"values": false, "calcs": ["lastNotNull"]}
+          },
+          "targets": [{"expr": "avg(rms_current_peak{stream=~\"threephase/.*\", phase=\"a\"} / rms_current_average{stream=~\"threephase/.*\", phase=\"a\"})", "refId": "A"}],
+          "title": "Current Spikiness (Peak/Avg)",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "description": "Power factor indicates efficiency. Low PF means drawing more current for same real power, reducing available capacity. Target: >0.95.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "decimals": 1,
+              "color": {"mode": "thresholds"},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "red", "value": null},
+                  {"color": "yellow", "value": 0.85},
+                  {"color": "green", "value": 0.95}
+                ]
+              },
+              "max": 1.0,
+              "min": 0
+            }
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+          "id": 3,
+          "options": {
+            "graphMode": "area",
+            "orientation": "horizontal",
+            "textMode": "value",
+            "reduceOptions": {"values": false, "calcs": ["lastNotNull"]}
+          },
+          "targets": [{"expr": "avg(power_factor_latest{stream=~\"threephase/.*\", phase=\"a\"})", "refId": "A"}],
+          "title": "Power Factor (Average)",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "description": "Available capacity as percentage of {{ .Values.breakerRatingAmps }}A per-phase breaker limit. Shows safety margin on the most-loaded phase. <20% headroom indicates capacity constraints.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "decimals": 1,
+              "color": {"mode": "thresholds"},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "red", "value": null},
+                  {"color": "orange", "value": 5},
+                  {"color": "yellow", "value": 10},
+                  {"color": "green", "value": 20}
+                ]
+              },
+              "max": 100,
+              "min": 0
+            }
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+          "id": 4,
+          "options": {
+            "graphMode": "area",
+            "orientation": "horizontal",
+            "textMode": "value",
+            "reduceOptions": {"values": false, "calcs": ["lastNotNull"]}
+          },
+          "targets": [{"expr": "({{ .Values.breakerRatingAmps }} - max(rms_current_peak{stream=~\"threephase/.*\", phase=\"a\"})) / {{ .Values.breakerRatingAmps }} * 100", "refId": "A"}],
+          "title": "Available Headroom",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "description": "Peak current per phase over time. Shows load balance and identifies which phase is closest to breaker limit. Unbalanced loads indicate wiring issues or poor workload distribution.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "amp",
+              "color": {"mode": "palette-classic"}
+            },
+            "overrides": [
+              {"matcher": {"id": "byName", "options": "Phase A"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "Phase B"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "Phase C"}, "properties": [{"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}}]}
+            ]
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+          "id": 5,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom"},
+            "tooltip": {"mode": "multi", "sort": "none"}
+          },
+          "targets": [
+            {"expr": "rms_current_peak{stream=\"threephase/karman1\", phase=\"a\"}", "legendFormat": "Phase A", "refId": "A", "interval": "1s"},
+            {"expr": "rms_current_peak{stream=\"threephase/karman2\", phase=\"a\"}", "legendFormat": "Phase B", "refId": "B", "interval": "1s"},
+            {"expr": "rms_current_peak{stream=\"threephase/karman3\", phase=\"a\"}", "legendFormat": "Phase C", "refId": "C", "interval": "1s"}
+          ],
+          "title": "Per-Phase Peak Current",
+          "type": "timeseries",
+          "interval": "1s"
+        },
+        {
+          "datasource": "Prometheus",
+          "description": "Power factor and voltage stability. Poor PF increases current draw; voltage sag indicates grid/transformer constraints.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"}
+            },
+            "overrides": [
+              {"matcher": {"id": "byName", "options": "RMS Voltage"}, "properties": [{"id": "unit", "value": "volt"}, {"id": "custom.axisPlacement", "value": "left"}]},
+              {"matcher": {"id": "byName", "options": "Power Factor"}, "properties": [{"id": "unit", "value": "percentunit"}, {"id": "custom.axisPlacement", "value": "right"}]}
+            ]
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+          "id": 6,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom"},
+            "tooltip": {"mode": "multi", "sort": "none"}
+          },
+          "targets": [
+            {"expr": "avg(rms_voltage_latest{stream=~\"threephase/.*\", phase=\"a\"})", "legendFormat": "RMS Voltage", "refId": "A", "interval": "1s"},
+            {"expr": "avg(power_factor_latest{stream=~\"threephase/.*\", phase=\"a\"})", "legendFormat": "Power Factor", "refId": "B", "interval": "1s"}
+          ],
+          "title": "Voltage & Power Factor",
+          "type": "timeseries",
+          "interval": "1s"
+        },
+        {
+          "datasource": "Prometheus",
+          "description": "Real-time three-phase combined real power. Shows instantaneous power consumption.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt",
+              "color": {"mode": "palette-classic"}
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+          "id": 7,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom"},
+            "tooltip": {"mode": "multi", "sort": "none"}
+          },
+          "targets": [
+            {"expr": "sum(real_power_three_phase_latest{stream=\"cycle-aligned\", phase=\"a\"})", "legendFormat": "Real Power", "refId": "A", "interval": "1s"},
+            {"expr": "sum(reactive_power_three_phase_latest{stream=\"cycle-aligned\", phase=\"a\"})", "legendFormat": "Reactive Power", "refId": "B", "interval": "1s"}
+          ],
+          "title": "Real Power - Latest",
+          "type": "timeseries",
+          "interval": "1s"
+        },
+        {
+          "datasource": "Prometheus",
+          "description": "Gap between peak and average shows power spikiness. Large gaps indicate unpredictable workloads.",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt",
+              "color": {"mode": "palette-classic"}
+            },
+            "overrides": [
+              {"matcher": {"id": "byName", "options": "Peak"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "Trough"}, "properties": [{"id": "color", "value": {"fixedColor": "blue", "mode": "fixed"}}]},
+              {"matcher": {"id": "byName", "options": "Average"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]}
+            ]
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+          "id": 8,
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom"},
+            "tooltip": {"mode": "multi", "sort": "none"}
+          },
+          "targets": [
+            {"expr": "sum(real_power_three_phase_peak{stream=\"cycle-aligned\", phase=\"a\"})", "legendFormat": "Peak", "refId": "A", "interval": "1s"},
+            {"expr": "sum(real_power_three_phase_average{stream=\"cycle-aligned\", phase=\"a\"})", "legendFormat": "Average", "refId": "B", "interval": "1s"},
+            {"expr": "sum(real_power_three_phase_trough{stream=\"cycle-aligned\", phase=\"a\"})", "legendFormat": "Trough", "refId": "C", "interval": "1s"}
+          ],
+          "title": "Real Power - Peak/Avg/Trough (Spikiness)",
+          "type": "timeseries",
+          "interval": "1s"
+        },
+        {
+          "datasource": "Prometheus",
+          "description": "Detailed view of all available metrics for troubleshooting and analysis.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"}
+            }
+          },
+          "gridPos": {"h": 10, "w": 24, "x": 0, "y": 22},
+          "id": 9,
+          "options": {
+            "showHeader": true,
+            "footer": {"show": false}
+          },
+          "targets": [
+            {
+              "expr": "sum by (metric, stat)(label_replace(label_replace({__name__=~\"(active_power|real_power|reactive_power|apparent_power|power_factor|rms_voltage|rms_current|dc_offset_voltage|dc_offset_current|real_power_three_phase|reactive_power_three_phase)_(latest|average|peak|trough)\", stream=~\"threephase/.*|cycle.*\", phase=\"a\"}, \"metric\", \"$1\", \"__name__\", \"^(.*)_(latest|average|peak|trough)$\"), \"stat\", \"$1\", \"__name__\", \"^.*_(latest|average|peak|trough)$\"))",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "title": "All Metrics (Detailed)",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {"Time": true, "__name__": true},
+                "renameByName": {"Value": "value", "metric": "metric", "stat": "stat"}
+              }
+            },
+            {
+              "id": "sortBy",
+              "options": {
+                "fields": [
+                  {"name": "metric", "descending": false},
+                  {"name": "stat", "descending": false}
+                ]
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ]
+    }
+{{- end }}

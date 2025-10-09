@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karman-config
+  namespace: {{ .Values.namespace }}
+data:
+  RACK_ID: "{{ .Values.rackId }}"
+  BREAKER_RATING_AMPS: "{{ .Values.breakerRatingAmps }}"
+  SYSTEM_VOLTAGE: "{{ .Values.systemVoltage }}"
+  BIBIMBAP_UPSTREAM: "{{ ternary .Values.source.karmanEndpoint .Values.source.dataReplayEndpoint (eq .Values.source.mode "live") }}"
+

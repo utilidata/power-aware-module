@@ -1,0 +1,67 @@
+{{- if .Values.replay.enabled }}
+{{- $topic := .Values.source.topic | default "" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-replay
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: data-replay } }
+  template:
+    metadata: { labels: { app: data-replay } }
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.selectors.gpu }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.gpu }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      containers:
+      - name: data-replay
+        image: {{ .Values.images.dataReplay }}
+        env:
+        - name: FILE
+          value: /datasets/{{ .Values.replay.defaultDataset }}
+        - name: RATE_HZ
+          value: "{{ .Values.replay.rateHz }}"
+        - name: PUB
+          value: "tcp://0.0.0.0:5557"
+        # Bibimbap prefixes frames when export_topic_name is configured; keep replay aligned by
+        # forwarding source.topic into the publisher so consumers can subscribe consistently.
+        - name: TOPIC
+          value: {{ $topic | quote }}
+        ports:
+        - name: zmq
+          containerPort: 5557
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        readinessProbe:
+          tcpSocket:
+            port: 5557
+          initialDelaySeconds: 5
+          periodSeconds: 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-replay
+  namespace: {{ .Values.namespace }}
+spec:
+  selector: { app: data-replay }
+  ports:
+  - name: zmq
+    port: 5557
+    targetPort: 5557
+{{- end }}

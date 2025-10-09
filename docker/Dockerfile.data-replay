@@ -1,0 +1,12 @@
+FROM rustlang/rust:nightly-bookworm AS build
+WORKDIR /app
+COPY services/data-replay/Cargo.toml ./Cargo.toml
+COPY services/data-replay/src ./src
+COPY proto /proto
+RUN cargo build --release
+
+FROM debian:bookworm-slim
+COPY --from=build /app/target/release/data-replay /usr/local/bin/data-replay
+COPY datasets/*.csv /datasets/
+ENV FILE=/datasets/sample1-b200-no-powercap.csv RATE_HZ=60 PUB=tcp://0.0.0.0:5557 TOPIC="" RUST_LOG=info
+ENTRYPOINT ["/usr/local/bin/data-replay"]

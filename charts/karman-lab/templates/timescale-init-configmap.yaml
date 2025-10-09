@@ -1,0 +1,11 @@
+{{- if .Values.timescale.install }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timescale-init-sql
+  namespace: {{ .Values.namespace }}
+data:
+  001-init.sql: |
+{{ .Files.Get "files/timescale-init.sql" | indent 4 }}
+{{- end }}
+

@@ -1,0 +1,5 @@
+.DS_Store
+
+# Helm dependency artifacts (Chart.lock should be committed, but tarballs regenerated)
+charts/*/charts/*.tgz
+charts/*/charts/*.tar.gz

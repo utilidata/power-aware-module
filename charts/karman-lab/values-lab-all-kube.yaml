@@ -1,0 +1,36 @@
+# Everything in Kubernetes on two nodes (GPU + Infra)
+namespace: karman
+
+# Label your nodes once:
+#   kubectl label node <GPU_NODE>   karman.io/role=gpu
+#   kubectl label node <INFRA_NODE> karman.io/role=infra
+
+selectors:
+  gpu:
+    karman.io/role: gpu
+  infra:
+    karman.io/role: infra
+
+prometheus:
+  mode: internal
+  install: true
+  operator:
+    enabled: true
+
+kube-prometheus-stack:
+  grafana:
+    nodeSelector:
+      karman.io/role: infra
+  prometheus:
+    prometheusSpec:
+      nodeSelector:
+        karman.io/role: infra
+
+timescale:
+  install: true
+
+source:
+  mode: live
+  # Replace with your device IP
+  karmanEndpoint: "tcp://<DEVICE_IP>:5557"
+

@@ -1,0 +1,105 @@
+namespace: karman
+
+images:
+  dataExporter: public.ecr.aws/k0f5s7n3/karman/data-exporter:latest
+  dataDb: public.ecr.aws/k0f5s7n3/karman/data-db:latest
+  dataReplay: public.ecr.aws/k0f5s7n3/karman/data-replay:latest
+
+selectors:
+  # GPU node selector for data-exporter/data-db/data-replay (leave empty for Minikube/single-node)
+  gpu: {}
+  # Infra node selector for Prometheus/Grafana/TimescaleDB (when used in-cluster)
+  infra: {}
+
+tolerations:
+  gpu: []
+  infra: []
+rackId: "r42"
+breakerRatingAmps: 60
+systemVoltage: 120
+
+timescale:
+  # If you already have a TimescaleDB, set a DSN here.
+  # Example: postgres://user:pass@10.0.0.5:5432/karman?sslmode=disable
+  dsn: ""
+  # For demo/minikube, optionally install an in-cluster TimescaleDB.
+  install: true
+  user: karman
+  password: karman
+  database: karman
+  port: 5432
+
+# Prometheus and Grafana configuration
+# - mode: external (default) keeps scraping from a laptop Prometheus via hostNetwork
+# - mode: internal enables a ClusterIP Service for data-exporter and (optionally) ServiceMonitor
+prometheus:
+  mode: internal            # external | internal
+  scrapeInterval: 1s        # used by ServiceMonitor when operator.enabled
+  operator:
+    enabled: true           # default true for demo; requires CRDs (see README)
+  install: true
+
+grafana:
+  install: false            # reserved if we later add a subchart
+
+# Optional dependency settings for kube-prometheus-stack (used when prometheus.install=true)
+kube-prometheus-stack:
+  grafana:
+    enabled: true
+    adminPassword: karman
+    grafana.ini:
+      dashboards:
+        min_refresh_interval: 1s
+    service:
+      type: ClusterIP
+    # Only load Karman dashboards, hide default k8s monitoring dashboards
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        labelValue: "1"
+        # Ignore default dashboards from kube-prometheus-stack
+        searchNamespace: karman
+        provider:
+          foldersFromFilesStructure: true
+    # Disable default dashboards that come with the chart
+    defaultDashboardsEnabled: false
+    defaultDashboardsTimezone: utc
+  # Disable components we don't need for Karman demo
+  alertmanager:
+    enabled: false
+  kubeStateMetrics:
+    enabled: false
+  nodeExporter:
+    enabled: false
+  grafana-agent:
+    enabled: false
+  prometheus:
+    prometheusSpec:
+      # Allow selecting ServiceMonitors without requiring chart-specific labels
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+      probeSelectorNilUsesHelmValues: false
+      # Set global scrape interval to 1s for high-resolution power metrics
+      scrapeInterval: 1s
+      evaluationInterval: 1s
+
+source:
+  mode: replay              # live | replay
+  # Preferred name for the live Karman device endpoint
+  karmanEndpoint: "tcp://10.0.0.5:5557"
+  dataReplayEndpoint: "tcp://data-replay.karman.svc:5557"
+  # ZeroMQ topic for per-cycle calculations (publisher and subscribers must match)
+  topic: "cycle-aligned"
+
+replay:
+  enabled: true
+  rateHz: 60
+  defaultDataset: sample1-b200-no-powercap.csv
+  datasetImage: ""
+
+# Egress controls for external endpoints (DB and live ZMQ)
+# Provide CIDRs when you want to restrict egress to specific IPs, e.g. ["10.0.0.5/32"].
+# If empty, the NetworkPolicy allows egress to 0.0.0.0/0 on the relevant ports.
+egress:
+  allowedCidrs: []

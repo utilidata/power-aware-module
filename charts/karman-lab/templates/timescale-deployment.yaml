@@ -1,0 +1,76 @@
+{{- if .Values.timescale.install }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timescale
+  namespace: {{ .Values.namespace }}
+  labels: { app: timescale }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: timescale } }
+  template:
+    metadata: { labels: { app: timescale } }
+    spec:
+      {{- with .Values.selectors.infra }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.infra }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      containers:
+      - name: timescaledb
+        image: timescale/timescaledb:latest-pg15
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_USER
+          value: "{{ .Values.timescale.user }}"
+        - name: POSTGRES_PASSWORD
+          value: "{{ .Values.timescale.password }}"
+        - name: POSTGRES_DB
+          value: "{{ .Values.timescale.database }}"
+        ports:
+        - containerPort: 5432
+          name: postgres
+        readinessProbe:
+          exec: { command: ["/bin/sh","-c","pg_isready -U {{ .Values.timescale.user }}"] }
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          exec: { command: ["/bin/sh","-c","pg_isready -U {{ .Values.timescale.user }}"] }
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        - name: init-sql
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: init-sql
+        configMap:
+          name: timescale-init-sql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timescale
+  namespace: {{ .Values.namespace }}
+  labels: { app: timescale }
+spec:
+  selector: { app: timescale }
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+{{- end }}

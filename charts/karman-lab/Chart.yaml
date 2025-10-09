@@ -1,0 +1,11 @@
+apiVersion: v2
+name: karman-lab
+description: Karman lab v0.5 (data-exporter + data-db + data-replay)
+type: application
+version: 0.1.0
+appVersion: "0.5.0"
+dependencies:
+  - name: kube-prometheus-stack
+    repository: https://prometheus-community.github.io/helm-charts
+    version: ">=61.0.0 < 80.0.0"
+    condition: prometheus.install
