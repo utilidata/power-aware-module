@@ -1,21 +1,21 @@
 ![Karman Power Aware Module Banner](./docs/images/readme_banner.png)
 # Karman Power Aware Module
 
-Low latency, high-resolution power-aware data products to increase compute capacity in AI data center environments.
+Low latency, high-resolution power-aware data products to increase compute capacity in AI data centers.
 
 # **Research Preview**
 
-Karman is a distributed AI platform powered by a compact custom NVIDIA system on module (SoM), processing high-resolution power system metrology to enable real-time decision-making and controls in AI data centers. Karman integrates directly with data center power distribution hardware, including PDUs and power trays. This integration allows Karman to produce data products that capture the complexity of AI workloads and their associated, often highly variable, power consumption.
+Karman is a distributed AI platform, powered by a custom NVIDIA system on module (SOM), that processes high-resolution power system metrology to enable real-time decision-making and controls in AI data centers. Karman integrates directly with data center power distribution hardware, including PDUs and power trays. This integration allows Karman to produce data products that capture the complexity of AI workloads and their associated, often highly variable, power consumption.
 
 This research preview offers samples of Karman’s initial data product, Power Quality Analytics, through a minimal Kubernetes reference implementation. The preview demonstrates how to integrate Karman data products with servers in the AI data center, a crucial first step towards power-aware operations and increasing data center computing capacity with Karman. 
 
-Karman data products enable advanced customer-built use cases including server and rack-level power forecasting, GPU/PSU failure prediction, thermal hot spot detection, phase balancing optimization, power-aware scheduling, and optimal power oversubscription strategies.
+Karman data products enable advanced custom-built use cases, including server and rack-level power forecasting, GPU/PSU failure prediction, thermal hot spot detection, phase balancing optimization, power-aware scheduling, and optimal power oversubscription strategies.
 
-Karman developer kits are available for pre-order at: [https://utilidata.com/interest-form/github](https://utilidata.com/interest-form/github).
+Karman data center developer kits are available for [pre-order](https://utilidata.com/interest-form/github).
 
 # **The Era of Power-Constrained AI Data Centers**
 
-AI data centers are quickly outgrowing existing power generation infrastructure. Current best practices for managing and using compute resources include many optimizations, but they typically don’t consider granular real-time energy use. Operators cannot fully manage their power budget and maximize compute without a detailed understanding of server-level power behavior. This orchestration gap is exactly what Karman is built to close. 
+AI data centers are quickly reaching the limits of their provisioned poweroutgrowing existing power infrastructure. Current best practices for managing and using compute resources include many optimizations, but they typically don’t consider granular real-time energy use. Operators cannot fully manage their power budget and maximize compute without a detailed understanding of server-level power behavior. This orchestration gap is exactly what Karman is built to close.
 
 Karman is framework agnostic and provides server-level power-aware data products with the following characteristics:
 
@@ -32,11 +32,11 @@ This research preview demonstrates the following components in a minimal Kuberne
 
 | Component | Description |
 | :---- | :---- |
-| <br>`data-replay`<br><br>Kubernetes pod with sample data snapshots and data transport mechanisms | Provides CSV snapshots of 3-phase power analytics data recorded in the Utilidata lab. Power analytics provided “single cycle” analytics on AC waveforms as measured by 32 kilosamples per second current and voltage metrology.<br><br>Snapshots are serialized via protobuf and published to a ZeroMQ topic. This enables data replay in Karman’s protocols without requiring users to have Karman hardware.<br><br> |
+| <br>`data-replay`<br><br>Kubernetes pod with sample data snapshots and data transport mechanisms | Provides CSV snapshots of 3-phase power analytics data recorded in the Utilidata lab. Power analytics provided “single cycle” analytics on AC waveforms as measured by 32 kilosamples per second current and voltage metrology. <br><br>Snapshots are serialized via protobuf and published to a ZeroMQ topic. This enables data replay in Karman’s protocols without requiring users to have Karman hardware. |
 | <br>`data-db`<br><br>Kubernetes pod for power analytics time-series database sink service  | Service that reads Karman’s per-cycle power analytics (\~60 samples per second) data from the `data-replay` pod above and writes to TimescaleDB for time-series visualization via Grafana dashboard. Includes logic for 3-phase data products. |
-| <br>`data-exporter`<br><br>Kubernetes pod for power analytics summary stats exporter service | Service reads the same bibimbap data from the `data-replay`pod above and exports summary statistics of that data at 1 sample per second for Prometheus. Includes logic for 3-phase data products.  |
-| <br>Helm chart<br><br> | Packages the three Kubernetes pods above for easy deployment; default configuration includes Prometheus, Grafana, and TimescaleDB. |
-| <br>Grafana dashboards<br><br> | Two pre-configured dashboards corresponding to `data-db` and `data-exporter` services. |
+| <br>`data-exporter`<br><br>Kubernetes pod for power analytics summary stats exporter service | Service reads the same bibimbap data from the `data-replay`<br><br>pod above and exports summary statistics of that data at 1 sample per second for Prometheus. Includes logic for 3-phase data products.  |
+| Helm chart | Packages the three Kubernetes pods above for easy deployment; default configuration includes Prometheus, Grafana, and TimescaleDB. |
+| Grafana dashboards | Two pre-configured dashboards corresponding to `data-db` and `data-exporter` services. |
 
 <br><br>
 <img src="./docs/images/data_replay_architecture_diagram.svg" width="100%">
@@ -45,9 +45,7 @@ This research preview demonstrates the following components in a minimal Kuberne
 
 ## **Getting Started**
 
-This deployment runs self-contained on Minikube for evaluation, or deploys to customer clusters with the upcoming Karman Developer Kit.
-
-## 
+This deployment runs self-contained on Minikube for evaluation, or deploys to customer clusters with the upcoming Karman developer kit.
 
 ## **Quick Start**
 
@@ -108,12 +106,12 @@ kubectl -n karman port-forward svc/karman-lab-grafana 3000:80
 
 | Scenario | Description |
 | :---- | :---- |
-| `sample1-b200-no-powercap `  | A 3-minute workload trace was conducted, simulating up to 1,000 requests per minute. The Qwen3-Coder-480B-A35B-Instruct model was used via vLLM with default batch parameters and no power limit. |
-| `sample2-b200-static-powercap` | Same as scenario 1 with power limits set to 300W per GPU |
-| `sample3-b200-dynamic-powercap` | Same as scenario 1 with power limits programmed to cycle through three steps in \~10 second increments, 900W, 600W, and 300W per GPU, for the duration of the scenario. |
-| `sample4-b200-partial-dynamic-powercap` | Same as scenario 3 with power limits cycling twice during the middle of the scenario.  |
+| `sample1-b200-no-powercap`  | A 3-minute workload trace was conducted, simulating up to 1,000 requests per minute. The Qwen3-Coder-480B-A35B-Instruct model was used via vLLM with default batch parameters and no power cap. |
+| `sample2-b200-static-powercap` | Same as scenario 1 with power caps set to 300W per GPU |
+| `sample3-b200-dynamic-powercap` | Same as scenario 1 with power caps programmed to cycle through three steps in \~10 second increments, 900W, 600W, and 300W per GPU, for the duration of the scenario. |
+| `sample4-b200-partial-dynamic-powercap` | Same as scenario 3 with power caps cycling twice during the middle of the scenario.  |
 
-To see updated metrics in the dashboards, restart the data flow::
+To see updated metrics in the dashboards, restart the data flow:
 
 ```shell
 # Restart all components with proper timing
@@ -131,17 +129,18 @@ Multiple GPU power scenarios are included in the `data-replay` image. Switch bet
 ./scripts/restart-data-flow.sh sample2-b200-static-powercap
 
 ```
+
 Available datasets:
 - [`sample1-b200-no-powercap`](./datasets/sample1-b200-no-powercap.csv) (default) - B200 GPU with no power capping
-- [`sample2-b200-static-powercap`](./datasets/sample2-b200-static-powercap.csv) - B200 with static power limit
-- [`sample3-b200-dynamic-powercap`](./datasets/sample3-b200-dynamic-powercap.csv) - B200 with dynamic power management
+- [`sample2-b200-static-powercap`](./datasets/sample2-b200-static-powercap.csv) - B200 with static power cap
+- [`sample3-b200-dynamic-powercap`](./datasets/sample3-b200-dynamic-powercap.csv) - B200 with dynamic power capping
 - [`sample4-b200-partial-dynamic-powercap`](./datasets/sample4-b200-partial-dynamic-powercap.csv) - B200 with partial dynamic capping
 
 All datasets provide 3-6 minutes of real B200 server measurements at 60 samples per second.
 
 ## **Switching to Developer Kit Hardware**
 
-Karman developer kits will be available soon. When connecting to a Karman developer kit, switching from replay mode to the developer kit is a simple configuration change:
+Karman developer kits will begin shipping in November. When connecting to a Karman developer kit, switching from replay mode to the developer kit is a simple configuration change:
 
 ```shell
 helm upgrade karman-lab charts/karman-lab -n karman \
