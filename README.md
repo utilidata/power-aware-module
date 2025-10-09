@@ -15,7 +15,7 @@ Karman data center developer kits are available for [pre-order](https://utilidat
 
 # **The Era of Power-Constrained AI Data Centers**
 
-AI data centers are quickly reaching the limits of their provisioned poweroutgrowing existing power infrastructure. Current best practices for managing and using compute resources include many optimizations, but they typically don’t consider granular real-time energy use. Operators cannot fully manage their power budget and maximize compute without a detailed understanding of server-level power behavior. This orchestration gap is exactly what Karman is built to close.
+AI data centers are quickly outgrowing existing utility and on-site power infrastructure. Current best practices for managing and using compute resources include many optimizations, but they typically don’t consider granular real-time energy use. Operators cannot fully manage their power budget and maximize compute without a detailed understanding of server-level power behavior. This orchestration gap is exactly what Karman is built to close.
 
 Karman is framework agnostic and provides server-level power-aware data products with the following characteristics:
 
