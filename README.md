@@ -11,7 +11,7 @@ This research preview offers samples of Karman’s initial data product, Power Q
 
 Karman data products enable advanced custom-built use cases, including server and rack-level power forecasting, GPU/PSU failure prediction, thermal hot spot detection, phase balancing optimization, power-aware scheduling, and optimal power oversubscription strategies.
 
-Karman data center developer kits are available for [pre-order](https://utilidata.com/interest-form/github).
+Karman data center developer kits are available for [pre-order](https://utilidata.com/interest-form?utm_source=github&utm_medium=website+&utm_campaign=Karman_dev_kit&utm_id=gh-karman-dev-kit).
 
 # **The Era of Power-Constrained AI Data Centers**
 
