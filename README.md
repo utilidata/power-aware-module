@@ -184,5 +184,5 @@ kubectl delete namespace karman
 
 # Option 2: Completely destroy and recreate Minikube
 minikube delete
-minikube start --cpus 4 --memory 8192 --kubernetes-version=v1.33.0
+minikube start --cpus 4 --memory 7168 --kubernetes-version=v1.33.0
 ```
