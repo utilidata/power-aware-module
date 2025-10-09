@@ -1,0 +1,17 @@
+{{- if eq .Values.prometheus.mode "internal" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-exporter
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: data-exporter
+spec:
+  selector: { app: data-exporter }
+  ports:
+  - name: metrics
+    port: 9105
+    targetPort: 9105
+    protocol: TCP
+{{- end }}
+

@@ -1,0 +1,22 @@
+{{- if and (eq .Values.prometheus.mode "internal") .Values.prometheus.operator.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: data-exporter
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: data-exporter
+    # kube-prometheus-stack defaults to selecting ServiceMonitors with label
+    #   release: <.Release.Name>
+    # Adding it here ensures selection without extra config.
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: data-exporter
+  namespaceSelector:
+    matchNames: ["{{ .Values.namespace }}"]
+  endpoints:
+  - port: metrics
+    interval: {{ .Values.prometheus.scrapeInterval | default "1m" }}
+{{- end }}

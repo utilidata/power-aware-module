@@ -1,0 +1,31 @@
+# Karman-only in Kubernetes; Prometheus, Grafana, TimescaleDB are external
+namespace: karman
+
+selectors:
+  gpu:
+    karman.io/role: gpu
+  infra: {}
+
+prometheus:
+  mode: external     # data-exporter on hostNetwork+hostPort for outside Prom scrape
+  install: false     # do not install kube-prometheus-stack
+  operator:
+    enabled: false   # no ServiceMonitor without Operator
+
+timescale:
+  install: false
+  # Replace with your external DB DSN
+  dsn: "postgres://user:pass@<LAPTOP_IP>:5432/karman?sslmode=disable"
+
+source:
+  mode: live
+  # Replace with your device IP
+  karmanEndpoint: "tcp://<DEVICE_IP>:5557"
+
+# Restrict egress to only DB and device
+egress:
+  allowedCidrs:
+    - "<LAPTOP_IP>/32"
+    - "<DEVICE_IP>/32"
+
+# Label your GPU node with: kubectl label node <NODE> karman.io/role=gpu

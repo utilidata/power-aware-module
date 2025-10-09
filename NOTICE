@@ -1,0 +1,49 @@
+NOTICE
+
+This project includes open source software components developed by third parties.
+The following notices are provided for informational purposes only.
+
+=== Prometheus Operator, Prometheus, Alertmanager, Node Exporter, Kube-State-Metrics, Exporters ===
+Copyright (c) The Prometheus Authors
+https://github.com/prometheus/prometheus
+Licensed under the Apache License, Version 2.0
+http://www.apache.org/licenses/LICENSE-2.0
+
+=== kube-prometheus-stack Helm Chart ===
+Copyright (c) Prometheus Community
+Licensed under the Apache License, Version 2.0
+https://github.com/prometheus-community/helm-charts
+
+=== Grafana ===
+Copyright (c) Grafana Labs
+Licensed under the GNU Affero General Public License, version 3
+https://www.gnu.org/licenses/agpl-3.0.html
+https://github.com/grafana/grafana
+NOTE: This distribution deploys Grafana as provided by Grafana Labs. No modifications
+to Grafana source code have been made. Grafana is licensed separately under the AGPLv3.
+
+=== Grafana Dashboards ===
+Some dashboards included in this distribution are sourced from the Grafana community
+and are licensed under Apache 2.0 or Creative Commons Attribution 4.0 International (CC-BY-4.0).
+Where required, attribution is preserved in dashboard metadata.
+
+=== Timescale / Timescale-Prometheus ===
+https://github.com/timescale/promscale
+Copyright (c) Timescale, Inc.
+Licensed under the Apache License, Version 2.0
+http://www.apache.org/licenses/LICENSE-2.0
+
+---
+
+Utilidata has modified or created additional files in this repository
+which are provided under the Apache License, Version 2.0. See LICENSE for details.
+
+## Licensing and Attribution
+
+This project is licensed under the Apache License, Version 2.0 by Utilidata.
+
+It includes third-party open source components, including but not limited to
+Prometheus, Alertmanager, Grafana, kube-prometheus-stack, and Timescale. These
+components are licensed under their respective licenses (Apache 2.0, AGPLv3,
+or CC-BY-4.0 for some dashboards). Attribution and license details are provided
+in the NOTICE file.

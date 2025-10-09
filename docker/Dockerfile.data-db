@@ -1,0 +1,14 @@
+FROM rustlang/rust:nightly-bookworm AS build
+WORKDIR /app
+COPY services/data-db/Cargo.toml ./Cargo.toml
+COPY services/data-db/Cargo.lock ./Cargo.lock
+COPY services/data-db/src ./src
+COPY proto /proto
+RUN cargo build --release --locked
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
+ENV RUST_LOG=info
+USER 10001
+COPY --from=build /app/target/release/data-db /usr/local/bin/data-db
+ENTRYPOINT ["/usr/local/bin/data-db"]
