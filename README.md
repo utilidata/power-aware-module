@@ -69,26 +69,27 @@ cd power-aware-module
 # 1. Start Minikube
 minikube start --cpus 4 --memory 7168 --kubernetes-version=v1.33.0
 
-# 2. Add Helm repo and fetch dependencies
+# 2. Add Helm repo
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
+# 3. Fetch Helm dependencies
 helm dependency update charts/karman-lab
 
-# 3. Install Prometheus Operator CRDs (one-time requirement)
+# 4. Install Prometheus Operator CRDs (one-time requirement)
 helm install kps-crds prometheus-community/prometheus-operator-crds \
   --version 23.0.0 \
   --namespace karman --create-namespace || true
 
-# 4. Install the Karman stack
+# 5. Install the Karman stack
 helm upgrade --install karman-lab charts/karman-lab --namespace karman
 
-# 5. Wait for all pods to be ready (this may take 2-3 minutes)
+# 6. Wait for all pods to be ready (this may take 2-3 minutes)
 kubectl wait --for=condition=ready pod --all -n karman --timeout=300s
 
-# 6. Verify all pods are running
+# 7. Verify all pods are running
 kubectl -n karman get pods
 
-# 7. Open Grafana
+# 8. Open Grafana
 kubectl -n karman port-forward svc/karman-lab-grafana 3000:80
 ```
 
