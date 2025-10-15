@@ -7,5 +7,5 @@ appVersion: "0.5.0"
 dependencies:
   - name: kube-prometheus-stack
     repository: https://prometheus-community.github.io/helm-charts
-    version: ">=61.0.0 < 80.0.0"
+    version: "77.13.0"
     condition: prometheus.install
