@@ -62,6 +62,11 @@ kube-prometheus-stack:
         searchNamespace: karman
         provider:
           foldersFromFilesStructure: true
+      datasources:
+        enabled: true
+        label: grafana_datasource
+        labelValue: "1"
+        searchNamespace: karman
     # Disable default dashboards that come with the chart
     defaultDashboardsEnabled: false
     defaultDashboardsTimezone: utc
